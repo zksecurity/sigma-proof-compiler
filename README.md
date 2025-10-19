@@ -107,3 +107,7 @@ println!("{spec}");
 This outputs the following spec:
 
 ![specification example](https://github.com/user-attachments/assets/558ec655-f2da-42f7-94ca-01d8eacc9b40)
+
+## Portability and Authentication of Context
+
+Currently, proofs are portable as they do not authenticate their own environement. A future version of the API will include an optional prologue slice that can contain pure data or a hash to contextualize the proof.

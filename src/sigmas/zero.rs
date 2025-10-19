@@ -1,7 +1,7 @@
 use crate::{
     absorb::{SymInstance, SymPoint, SymScalar, SymWitness},
     compiler::SigmaProof,
-    sigmas::G,
+    sigmas::H,
 };
 
 pub struct ZeroCheckProtocol;
@@ -28,17 +28,17 @@ impl SigmaProof for ZeroCheckProtocol {
         let Self::INSTANCE {
             pubkey: _,
             commitment,
-            handle,
+            handle: _,
         } = instance.clone();
-        vec![commitment, handle]
+        vec![SymPoint::Const(*H), commitment]
     }
 
     fn psi(witness: &Self::WITNESS, instance: &Self::INSTANCE) -> Vec<SymPoint> {
         let ZeroCheckWitness { secret_key } = witness;
 
         vec![
-            secret_key * SymPoint::Const(*G),
-            secret_key * instance.pubkey.clone(),
+            secret_key * instance.pubkey.clone(), // = H
+            secret_key * instance.handle.clone(), // = rH = enc(0, r)
         ]
     }
 }
@@ -58,22 +58,20 @@ mod tests {
         let witness = ZeroCheckWitness {
             secret_key: SymScalar::Const(secret),
         };
+        let public_key = secret.invert() * *H;
 
-        // Generate public key P (in practice, this would be the ElGamal public key)
-        let public_key_scalar = Scalar::random(rng);
-        let public_key = public_key_scalar * *G;
+        // generate opening
+        let r = Scalar::random(rng);
 
-        // Compute the commitment C = s*H (where H is the Pedersen generator)
-        // For simplicity, using base point as H
-        let h_generator = *G;
-        let commitment = secret * h_generator;
+        // zero_commitment = 0 * G + r * H
+        let zero_commitment = r * *H;
 
         // Compute the decrypt handle D = s*P
-        let handle = secret * public_key;
+        let handle = r * public_key;
 
         let instance = ZeroCheckInstance {
             pubkey: SymPoint::Const(public_key),
-            commitment: SymPoint::Const(commitment),
+            commitment: SymPoint::Const(zero_commitment),
             handle: SymPoint::Const(handle),
         };
 
