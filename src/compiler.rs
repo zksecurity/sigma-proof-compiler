@@ -19,16 +19,17 @@ fn sympoint_to_latex_with_context(
     is_instance: bool,
 ) -> String {
     match point {
+        SymPoint::WellKnownConst(name, _) => name.to_string(),
         SymPoint::Const(p) => {
             if *p == RISTRETTO_BASEPOINT_POINT {
                 // The base point G is always G unless we're in a specific context
                 "G".to_string()
             } else {
-                "P".to_string() // Some other point (could be a public key or other point)
+                panic!("use SymPoint::WellKnownConst instead for known constants");
             }
         }
-        SymPoint::Var(Some(_)) => "P".to_string(), // Variable point
-        SymPoint::Var(None) => "?".to_string(),    // Uninstantiated variable point
+        SymPoint::Var(Some(_)) => "??".to_string(), // Variable point
+        SymPoint::Var(None) => "?".to_string(),     // Uninstantiated variable point
         SymPoint::Add(p1, p2) => {
             format!(
                 "({} + {})",

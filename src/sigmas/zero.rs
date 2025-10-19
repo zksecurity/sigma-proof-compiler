@@ -30,7 +30,7 @@ impl SigmaProof for ZeroCheckProtocol {
             commitment,
             handle: _,
         } = instance.clone();
-        vec![SymPoint::Const(*H), commitment]
+        vec![H.clone(), commitment]
     }
 
     fn psi(witness: &Self::WITNESS, instance: &Self::INSTANCE) -> Vec<SymPoint> {
@@ -58,21 +58,20 @@ mod tests {
         let witness = ZeroCheckWitness {
             secret_key: SymScalar::Const(secret),
         };
-        let public_key = secret.invert() * *H;
+        let public_key = secret.invert() * H.clone();
 
         // generate opening
         let r = Scalar::random(rng);
 
         // zero_commitment = 0 * G + r * H
-        let zero_commitment = r * *H;
-
+        let zero_commitment = r * H.clone();
         // Compute the decrypt handle D = s*P
-        let handle = r * public_key;
+        let handle = r * &public_key;
 
         let instance = ZeroCheckInstance {
-            pubkey: SymPoint::Const(public_key),
-            commitment: SymPoint::Const(zero_commitment),
-            handle: SymPoint::Const(handle),
+            pubkey: public_key,
+            commitment: zero_commitment,
+            handle: handle,
         };
 
         // Generate and verify proof

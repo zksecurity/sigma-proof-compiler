@@ -30,7 +30,7 @@ impl SigmaProof for Okamoto {
 
     fn psi(witness: &Self::WITNESS, _instance: &Self::INSTANCE) -> Vec<SymPoint> {
         let Self::WITNESS { x, y } = witness.clone();
-        vec![(x * SymPoint::Const(*G)) + (y * SymPoint::Const(*H))]
+        vec![(x * G) + (y * H.clone())]
     }
 }
 
@@ -50,7 +50,7 @@ mod tests {
         };
 
         let instance = OkamotoInstance {
-            point: SymPoint::Const((sk * *G) + (sk * *H)),
+            point: (sk * G) + (sk * H.clone()),
         };
 
         let proof = Okamoto::prove(&witness, &instance).unwrap();

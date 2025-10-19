@@ -32,6 +32,7 @@ impl SymScalar {
 
 #[derive(Clone)]
 pub enum SymPoint {
+    WellKnownConst(&'static str, RistrettoPoint),
     Const(RistrettoPoint),
     Var(Option<RistrettoPoint>),
     Add(Box<SymPoint>, Box<SymPoint>),
@@ -43,7 +44,8 @@ pub enum SymPoint {
 impl SymPoint {
     pub fn evaluate(&self) -> Result<RistrettoPoint, SigmaProofError> {
         match self {
-            SymPoint::Const(p) => Ok(p.clone()),
+            SymPoint::WellKnownConst(_, p) => Ok(*p),
+            SymPoint::Const(p) => Ok(*p),
             SymPoint::Var(p) => p.ok_or(SigmaProofError::UninstantiatedPoint),
             SymPoint::Add(p1, p2) => Ok(p1.evaluate()? + p2.evaluate()?),
             SymPoint::Sub(p1, p2) => Ok(p1.evaluate()? - p2.evaluate()?),

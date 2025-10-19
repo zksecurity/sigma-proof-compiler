@@ -30,7 +30,7 @@ impl SigmaProof for Chaum {
 
     fn psi(witness: &Self::WITNESS, _instance: &Self::INSTANCE) -> Vec<SymPoint> {
         let Self::WITNESS { x } = witness.clone();
-        vec![&x * SymPoint::Const(*G), &x * SymPoint::Const(*H)]
+        vec![&x * G, &x * H.clone()]
     }
 }
 
@@ -49,8 +49,8 @@ mod tests {
         };
 
         let instance = ChaumInstance {
-            point1: SymPoint::Const(sk * *G),
-            point2: SymPoint::Const(sk * *H),
+            point1: sk * G,
+            point2: sk * H.clone(),
         };
 
         let proof = Chaum::prove(&witness, &instance).unwrap();
