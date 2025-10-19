@@ -1,0 +1,29 @@
+[package]
+name = "sigma-proof-compiler"
+version = "0.1.0"
+authors = ["ZKSecurity <hello@zksecurity.xyz>"]
+repository = "https://github.com/zksecurity/sigma-proof-compiler"
+license = "Apache-2.0"
+edition = "2021"
+description = "A Rust library for creating and verifying sigma protocols (zero-knowledge proofs of knowledge) using symbolic computation over elliptic curves"
+
+
+[dependencies]
+curve25519-dalek = { version = "4.1.3", features = [
+    "digest",
+    "rand_core",
+    "group",
+] }
+group = "0.13"
+rand = "0.8.5"
+rand_core = "0.6.4"
+lazy_static = "1.4.0"
+merlin = { version = "3", default-features = false }
+sigma-proof-compiler-derive = { version = "0.1.0", path = "sigma-proof-compiler-derive" }
+thiserror = "2.0.17"
+
+[features]
+default = []
+
+[workspace]
+members = ["sigma-proof-compiler-derive"]
