@@ -135,10 +135,14 @@ pub fn derive_sym_instance_impl(input: TokenStream) -> TokenStream {
             // Generate get_field_names() method body
             let get_field_names_body = match &data.fields {
                 Fields::Named(fields) => {
-                    let field_names: Vec<String> = fields.named.iter().map(|field| {
-                        let field_name = field.ident.as_ref().unwrap();
-                        field_name.to_string()
-                    }).collect();
+                    let field_names: Vec<String> = fields
+                        .named
+                        .iter()
+                        .map(|field| {
+                            let field_name = field.ident.as_ref().unwrap();
+                            field_name.to_string()
+                        })
+                        .collect();
 
                     let name_literals = field_names.iter().map(|n| quote! { #n });
                     quote! {
