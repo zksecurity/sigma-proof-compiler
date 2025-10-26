@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "block-buffer"
+version = "0.10.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
+dependencies = [
+ "generic-array",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -68,6 +77,7 @@ version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
+ "block-buffer",
  "crypto-common",
 ]
 
@@ -225,6 +235,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
+name = "sha3"
+version = "0.10.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
+dependencies = [
+ "digest",
+ "keccak",
+]
+
+[[package]]
 name = "sigma-proof-compiler"
 version = "0.1.0"
 dependencies = [
@@ -235,6 +255,7 @@ dependencies = [
  "rand",
  "rand_core",
  "sigma-proof-compiler-derive",
+ "spongefish",
  "thiserror",
 ]
 
@@ -245,6 +266,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "spongefish"
+version = "0.2.0-alpha"
+source = "git+https://github.com/arkworks-rs/spongefish?branch=mu%2Frefactor#189e162073f1f3e66678a1e49632159b48d32261"
+dependencies = [
+ "curve25519-dalek",
+ "digest",
+ "group",
+ "rand",
+ "sha3",
+ "zerocopy",
+ "zeroize",
 ]
 
 [[package]]

@@ -2,9 +2,12 @@ use crate::{
     absorb::{SymInstance, SymWitness},
     equations::{SymPoint, SymScalar},
     errors::{SigmaProofError, SigmaProofResult},
-    transcript::ProofTranscript,
 };
 use curve25519_dalek::{constants::RISTRETTO_BASEPOINT_POINT, RistrettoPoint, Scalar};
+use spongefish::{ProverState, VerifierState};
+
+const PROTOCOL_ID: [u8; 32] = [0u8; 32];
+const SESSION_ID: [u8; 32] = [0u8; 32];
 
 /// Escape a variable name for LaTeX and wrap in texttt
 fn latex_var(name: &str) -> String {
@@ -149,14 +152,14 @@ pub trait SigmaProof {
 
     fn prove(witness: &Self::WITNESS, instance: &Self::INSTANCE) -> SigmaProofResult<Vec<u8>> {
         // init transcript
-        let mut transcript = ProofTranscript::new_prover(Self::LABEL);
+        let mut prover_state = ProverState::new_std(PROTOCOL_ID, SESSION_ID);
 
         // absorb instance, not f(instance)
         for point in instance.points() {
-            transcript.common_absorb_point(b"", &point.evaluate()?);
+            prover_state.public_message(&point.evaluate()?);
         }
         for scalar in instance.scalars() {
-            transcript.common_absorb_scalar(b"", &scalar.evaluate()?);
+            prover_state.public_message(&scalar.evaluate()?);
         }
 
         // round 1
@@ -164,23 +167,19 @@ pub trait SigmaProof {
         let alphas = Self::WITNESS::rand(rng);
         let commited_alphas = Self::psi(&alphas, instance);
         for point in &commited_alphas {
-            transcript.prover_absorb_point(b"r", &point.evaluate()?);
+            prover_state.prover_message(&point.evaluate()?);
         }
 
         // round 2
-        let e = transcript.challenge(b"e");
+        let e = prover_state.verifier_message::<Scalar>();
 
         // round 3
-        for z_i in witness
-            .values()?
-            .into_iter()
-            .zip(alphas.values()?)
-            .map(|(s, a)| s * e + a)
-        {
-            transcript.prover_absorb_scalar(b"z", &z_i);
+        for (s, a) in witness.values()?.into_iter().zip(alphas.values()?) {
+            let z_i = s * e + a;
+            prover_state.prover_message(&z_i);
         }
 
-        Ok(transcript.finalize())
+        Ok(prover_state.narg_string().to_vec())
     }
 
     fn verify(instance: &Self::INSTANCE, proof: &[u8]) -> Result<(), SigmaProofError> {
@@ -190,7 +189,7 @@ pub trait SigmaProof {
         }
 
         // init transcript
-        let mut transcript = ProofTranscript::new_verifier(Self::LABEL, proof);
+        let mut verifier_state = VerifierState::new_std(PROTOCOL_ID, SESSION_ID, proof);
 
         // evaluate f(instance)
         let big_x_points: Vec<_> = Self::f(instance)
@@ -200,25 +199,20 @@ pub trait SigmaProof {
 
         // absorb instance, not f(instance)
         for point in instance.points() {
-            transcript.common_absorb_point(b"", &point.evaluate()?);
+            verifier_state.public_message(&point.evaluate()?);
         }
         for scalar in instance.scalars() {
-            transcript.common_absorb_scalar(b"", &scalar.evaluate()?);
+            verifier_state.public_message(&scalar.evaluate()?);
         }
 
         // -> A
-        let big_a = transcript
-            .verifier_receive_points(b"r", big_x_points.len())
-            .ok_or(SigmaProofError::TranscriptError)?;
+        let big_a = verifier_state.prover_messages_vec(big_x_points.len())?;
 
         // <- challenge
-        let e = transcript.challenge(b"e");
+        let e = verifier_state.verifier_message::<Scalar>();
 
         // -> sigma
-        let sigmas = transcript
-            .verifier_receives_all_scalars(b"z")
-            .ok_or(SigmaProofError::TranscriptError)?;
-        println!("sigmas received: {}", sigmas.len());
+        let sigmas = verifier_state.prover_messages_vec(Self::WITNESS::num_scalars())?;
         let sigmas_as_input = Self::WITNESS::from_values(&sigmas)?;
 
         let psi_output = Self::psi(&sigmas_as_input, instance);
